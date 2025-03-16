@@ -2,6 +2,8 @@
 
 This plugin for [Papis](https://github.com/papis/papis) allows you to query and interact with your document library using large language models (LLMs). Papis-ask integrates [paper-qa](https://github.com/whitead/paper-qa/) with Papis to provide intelligent document search and question answering capabilities using natural language. It is inspired by the excellent work done by [isaksamsten](https://github.com/isaksamsten) on [papisqa](https://github.com/isaksamsten/papisqa).
 
+This is alpha software. Keep backups and use at your own risk.
+
 ## Installation
 
 ### Using pipx

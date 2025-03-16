@@ -1,0 +1,51 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling>=1.10.0"]
+
+[project]
+name = "papis-ask"
+version = "0.0.1"
+description = "Use AI to search your Papis library"
+readme = "README.md"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "Julian Hauser", email = "julian@julianhauser.com" }]
+classifiers = [
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Education",
+  "Intended Audience :: End Users/Desktop",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: System Administrators",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Natural Language :: English",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft",
+  "Operating System :: OS Independent",
+  "Operating System :: POSIX",
+  "Operating System :: Unix",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Utilities",
+]
+dependencies = [
+  "papis>=0.14",
+  "paper-qa>=5.14",
+  "click-default-group>=1.2.4",
+  "rich>=13.9.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0.0", "pytest-asyncio>=0.25.0", "pytest-mock>=3.10.0"]
+
+#TODO: check what's necessary here
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "session"
+testpaths = ["tests"]
+
+[project.entry-points."papis.command"]
+ask = "papis_ask.main:cli"

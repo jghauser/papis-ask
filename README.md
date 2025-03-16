@@ -82,3 +82,4 @@ $ papis ask "My question" --max-sources 1   # Use up to 8 sources in the answer 
 
 ## Screenshots
 
+![2025-03-16T19:37:19,390782526+01:00](https://github.com/user-attachments/assets/6ff8e847-b0ca-45e0-a3f2-066d92b7f674)

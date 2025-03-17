@@ -109,6 +109,7 @@
       devShells.default = pkgs.mkShell {
         buildInputs = [
           python
+          pkgs.papis
           self.packages.${system}.papis-ask
         ];
         shellHook = ''

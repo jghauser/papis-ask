@@ -1,8 +1,8 @@
 # Papis-ask
 
-This plugin for [Papis](https://github.com/papis/papis) allows you to query and interact with your document library using large language models (LLMs). Papis-ask integrates [paper-qa](https://github.com/whitead/paper-qa/) with Papis to provide intelligent document search and question answering capabilities using natural language. It is inspired by the excellent work done by [isaksamsten](https://github.com/isaksamsten) on [papisqa](https://github.com/isaksamsten/papisqa).
+This plugin for [Papis](https://github.com/papis/papis) integrates [paper-qa](https://github.com/whitead/paper-qa/) to provide intelligent document search and question answering capabilities using natural language. You can set it up to use a variety of local and online LLMs. It is inspired by [isaksamsten](https://github.com/isaksamsten)'s excellent work on [papisqa](https://github.com/isaksamsten/papisqa).
 
-This is alpha software. Keep backups and use at your own risk.
+This is under active development. Expect bugs and changes.
 
 ## Installation
 
@@ -79,7 +79,7 @@ $ papis ask "My question" --context         # Show context for each source (defa
 $ papis ask "My question" --excerpt         # Show context with excerpts (default: False)
 $ papis ask "My question" --to-json         # Output in JSON format (default: False)
 $ papis ask "My question" --evidence-k 20   # Retrieve 20 pieces of evidence (default: 10)
-$ papis ask "My question" --max-sources 1   # Use up to 8 sources in the answer (default: 5)
+$ papis ask "My question" --max-sources 10   # Use up to 10 sources in the answer (default: 5)
 ```
 
 ## Screenshots

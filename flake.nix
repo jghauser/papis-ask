@@ -1,5 +1,5 @@
 {
-  description = "Papis QA";
+  description = "Papis-ask";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -73,9 +73,12 @@
 
           build-system = with python3Packages; [hatchling];
 
-          propagatedBuildInputs = with python3Packages; [
-            paper-qa
+          buildInputs = with python3Packages; [
             papis
+          ];
+
+          dependencies = with python3Packages; [
+            paper-qa
             click-default-group
             rich
           ];
@@ -106,7 +109,6 @@
       devShells.default = pkgs.mkShell {
         buildInputs = [
           python
-          pkgs.papis
           self.packages.${system}.papis-ask
         ];
         shellHook = ''

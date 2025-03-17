@@ -521,19 +521,19 @@ async def _index_async(query: Optional[str], force: bool) -> None:
                 if info_yaml_last_modified > prev_index_time:
                     files_to_update_metadata.add((file_path, papis_id))
 
-    logger.debug(f"There are {len(files_to_index)} files that need to be indexed")
+    logger.info(f"{len(files_to_index)} file(s) will be indexed")
 
     # Removing all files needing to be indexed from those that need metadata updated
     files_to_update_metadata -= files_to_index
-    logger.debug(
-        f"There are {len(files_to_update_metadata)} files that need metadata updating"
+    logger.info(
+        f"{len(files_to_update_metadata)} file(s) will have their metadata updated"
     )
 
     # Figure out which documents need to be deleted
     files_to_delete = {
         Path(file) for file in index_files_to_dockey.keys()
     } - files_on_disk
-    logger.debug(f"There are {len(files_to_delete)} files that need to be deleted")
+    logger.info(f"{len(files_to_delete)} file(s) will be deleted from the index")
 
     # Find files to be deleted because they don't exist on disk anymore
     dockeys_to_delete_bc_missing: Set[str] = {

@@ -100,6 +100,7 @@
             ];
           };
         };
+        default = self.packages.${system}.papis-ask;
       };
 
       devShells.default = pkgs.mkShell {

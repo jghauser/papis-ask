@@ -50,7 +50,7 @@ async def add_file_to_index(
     file_path: Path,
     doc_papis: Dict[str, Any],
     docs_index: Any,
-    client: Any,
+    clients: Any,
     settings: Any,
 ) -> Optional[str]:
     """Add a file to the paperqa index."""
@@ -73,7 +73,7 @@ async def add_file_to_index(
             docname=docname,
             doc_papis=doc_papis,
             docs_index=docs_index,
-            client=client,
+            clients=clients,
             settings=settings,
         ):
             return ref
@@ -85,7 +85,7 @@ async def update_index_metadata(
     docname: str,
     doc_papis: Dict[str, Any],
     docs_index: Any,
-    client: Any,
+    clients: Any,
     settings: Any,
 ) -> Optional[str]:
     """Update metadata for a file in the paperqa index."""
@@ -93,12 +93,22 @@ async def update_index_metadata(
     ref, papis_id, _ = extract_doc_papis_metadata(doc_papis)
 
     # Fetch document details from metadata client
-    if doc_details := await client.query(
+    if doc_details := await clients["papis"].query(
         settings=settings,
         papis_id=papis_id,
         file_location=str(file_path),
-        metadata_client=client,
     ):
+        # fields = ["citation_count", "source_quality", "is_retracted"]
+        # if other_details := await clients["other"].query(
+        #     settings=settings,
+        #     title=doc_details["title"],
+        #     doi=doc_details["doi"],
+        #     authors=doc_details["authors"],
+        #     fields=fields,
+        # ):
+        #     for field in fields:
+        #         if other_details[field]:
+        #             doc_details[field] = other_details[field]
         doc_details.fields_to_overwrite_from_metadata = {
             "citation"
         }  # Restrict what can be overwritten, needed for below
@@ -442,7 +452,8 @@ async def _index_async(query: Optional[str], force: bool) -> None:
     # it slows down shell autocmplete otherwise
     from papis_ask.metadata_provider import PapisProvider
     from paperqa.clients import DocMetadataClient
-    from paperqa.clients.semantic_scholar import SemanticScholarProvider
+
+    # from paperqa.clients.semantic_scholar import SemanticScholarProvider
     from paperqa.clients.journal_quality import JournalQualityPostProcessor
 
     settings = get_settings()
@@ -467,13 +478,19 @@ async def _index_async(query: Optional[str], force: bool) -> None:
     papis_id_to_doc = {doc["papis_id"]: doc for doc in docs_papis}
     PapisProvider.configure(docs_by_id=papis_id_to_doc)
 
-    client = DocMetadataClient(
-        clients=(
-            # NOTE: order is important, we want PapisProvider to have the final say
-            {SemanticScholarProvider, JournalQualityPostProcessor},
-            {PapisProvider},
-        )
-    )
+    clients = {
+        "papis": DocMetadataClient(
+            clients={
+                PapisProvider,
+                JournalQualityPostProcessor,
+            }
+        ),
+        # "other": DocMetadataClient(
+        #     clients={
+        #         SemanticScholarProvider,
+        #     }
+        # ),
+    }
 
     prev_index_time = (
         get_last_modified(get_index_file())
@@ -579,7 +596,7 @@ async def _index_async(query: Optional[str], force: bool) -> None:
             file_path=file_path,
             doc_papis=doc_papis,
             docs_index=docs_index,
-            client=client,
+            clients=clients,
             settings=settings,
         ):
             logger.info(
@@ -614,7 +631,7 @@ async def _index_async(query: Optional[str], force: bool) -> None:
             docs_index=docs_index,
             dockey=dockey,
             docname=docname,
-            client=client,
+            clients=clients,
             settings=settings,
         ):
             logger.info(

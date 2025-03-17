@@ -90,11 +90,10 @@ async def update_index_metadata(
 ) -> Optional[str]:
     """Update metadata for a file in the paperqa index."""
     # Extract metadata from Papis document
-    ref, papis_id, doi = extract_doc_papis_metadata(doc_papis)
+    ref, papis_id, _ = extract_doc_papis_metadata(doc_papis)
 
     # Fetch document details from metadata client
     if doc_details := await client.query(
-        doi=doi,
         settings=settings,
         papis_id=papis_id,
         file_location=str(file_path),

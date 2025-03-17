@@ -22,7 +22,56 @@ $ pipx inject papis git+https://github.com/jghauser/papis-ask
 
 ### Using Nix Flake
 
-For Nix users, there's a Flake.
+Nix users can use the flake to create an overlay for Papis that includes Papis-ask.
+
+<details>
+  <summary>Nix configuration example</summary>
+
+```nix
+{
+  description = "Papis-ask installation example";
+
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    papis-ask = {
+      url = "github:jghauser/papis-ask"; # Replace with actual repository
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs = { self, nixpkgs, papis-ask, ... }:
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [
+          (final: prev: {
+            papis = prev.papis.overrideAttrs (oldAttrs: {
+              propagatedBuildInputs = (oldAttrs.propagatedBuildInputs or []) ++ [
+                papis-ask.packages.${system}.default
+              ];
+            });
+          })
+        ];
+      };
+    in {
+      # NixOS system configuration
+      nixosConfigurations.mySystem = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          ({ pkgs, ... }: {
+            environment.systemPackages = [
+              pkgs.papis
+            ];
+          })
+        ];
+      };
+    };
+}
+```
+
+</details>
 
 ## Configuration
 

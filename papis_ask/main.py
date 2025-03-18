@@ -226,7 +226,7 @@ def format_answer(
         pages = answer_context.text.doc.pages
         reference_line = Text("- ")
         reference_line.append(f"@{ref}, p. {pages}", style="blue")
-        reference_line.append(f" [file: {filename}]")
+        reference_line.append(f" ({filename})")
         references.append(reference_line)
 
     from rich.console import Group
@@ -263,7 +263,7 @@ def format_answer(
             pages = answer_context.text.doc.pages
             title = Text()
             title.append(f"@{ref}, p. {pages}", style="blue bold")
-            title.append(f" [file: {filename}]", style="white")
+            title.append(f" ({filename})", style="white")
             console.print(
                 Panel(
                     summary_table,

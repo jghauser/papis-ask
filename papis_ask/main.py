@@ -498,12 +498,12 @@ async def _index_async(query: Optional[str], force: bool) -> None:
         "papis": DocMetadataClient(
             clients={
                 PapisProvider,
+                JournalQualityPostProcessor,
             }
         ),
         "other": DocMetadataClient(
             clients={
                 SemanticScholarProvider,
-                JournalQualityPostProcessor,
             }
         ),
     }

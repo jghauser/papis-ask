@@ -53,8 +53,6 @@ async def parse_papis_to_doc_details(
     else:
         authors = None
 
-    import random
-
     logger.debug(f"file_location: {file_location}")
 
     doc_details = DocDetails(  # type: ignore[call-arg]
@@ -72,7 +70,7 @@ async def parse_papis_to_doc_details(
         url=doc.get("url"),
         title=doc.get("title"),
         citation_count=None,  # Local docs won't have citation counts
-        doi=str(doc.get("doi")) + str(random.randint(10, 99)),
+        doi=doc.get("doi"),
         file_location=file_location,
         other={},
     )

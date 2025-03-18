@@ -53,11 +53,8 @@ async def parse_papis_to_doc_details(
     else:
         authors = None
 
-    logger.debug(f"file_location: {file_location}")
-
     doc_details = DocDetails(  # type: ignore[call-arg]
         bibtex_type=BIBTEX_MAPPING.get(doc.get("type") or "other", "misc"),
-        bibtex=None,
         authors=authors,
         publication_date=publication_date,
         year=year,
@@ -69,7 +66,6 @@ async def parse_papis_to_doc_details(
         journal=doc.get("journal"),
         url=doc.get("url"),
         title=doc.get("title"),
-        citation_count=None,  # Local docs won't have citation counts
         doi=doc.get("doi"),
         file_location=file_location,
         other={},

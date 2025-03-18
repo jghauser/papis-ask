@@ -100,14 +100,15 @@ async def update_index_metadata(
     ):
         query_args = {
             "settings": settings,
-            # we don't want the doi and title, but they are needed for semantic
-            # scholar search
+            # we don't need the doi, title, and authors but they are needed
+            # for semantic scholar search
             "fields": [
                 "citation_count",
                 "source_quality",
                 "is_retracted",
                 "doi",
                 "title",
+                "authors",
             ],
             **{
                 key: value

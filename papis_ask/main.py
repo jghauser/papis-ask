@@ -27,6 +27,28 @@ settings = None
 FILE_ENDINGS = (".pdf", ".txt", ".html")
 
 
+def remove_document_from_index(docs_index: Any, dockey: str) -> Optional[str]:
+    """Remove a document from the index."""
+    # Get the document from the index
+    doc = docs_index.docs.get(dockey)
+    if not doc:
+        logger.warning(f"Document {dockey} not found in index")
+        return None
+
+    # Get file_location if it exists
+    file_location = getattr(doc, "file_location", None)
+
+    # Get docname for removal
+    docname = doc.docname
+
+    # Remove document from index
+    docs_index.delete(dockey=dockey)
+    docs_index.deleted_dockeys.remove(dockey)
+    docs_index.docnames.remove(docname)
+
+    return file_location
+
+
 def convert_answer_to_json(answer: Any) -> Dict[str, Any]:
     """Convert the answer object to a JSON-serializable dictionary."""
     return {
@@ -582,23 +604,15 @@ async def _index_async(query: Optional[str], force: bool) -> None:
 
     # Delete files that have been updated (to avoid having duplicates of same file with different hashes)
     for dockey in dockeys_to_delete_bc_updated:
-        docname = docs_index.docs[dockey].docname
-        docs_index.delete(dockey=dockey)
-        docs_index.deleted_dockeys.remove(dockey)
-        docs_index.docnames.remove(docname)
+        remove_document_from_index(docs_index, dockey)
 
     # Delete files that have been deleted
+    counter = 0
+    total_files = len(dockeys_to_delete_bc_missing)
     for dockey in dockeys_to_delete_bc_missing:
-        docname = docs_index.docs[dockey].docname
-        file_location = getattr(docs_index.docs.get(dockey), "file_location", None)
-        if file_location is None:
-            raise ValueError(
-                f"Document {dockey} is missing required 'file_location' attribute"
-            )
-        logger.info("Removing from index: %s", file_location)
-        docs_index.delete(dockey=dockey)
-        docs_index.deleted_dockeys.remove(dockey)
-        docs_index.docnames.remove(docname)
+        file_location = remove_document_from_index(docs_index, dockey)
+        if file_location:
+            logger.info("Removing from index: %s", file_location)
 
     # index all new files or changed files
     counter = 0

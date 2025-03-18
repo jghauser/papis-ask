@@ -98,17 +98,24 @@ async def update_index_metadata(
         papis_id=papis_id,
         file_location=str(file_path),
     ):
-        # fields = ["citation_count", "source_quality", "is_retracted"]
-        # if other_details := await clients["other"].query(
-        #     settings=settings,
-        #     title=doc_details["title"],
-        #     doi=doc_details["doi"],
-        #     authors=doc_details["authors"],
-        #     fields=fields,
-        # ):
-        #     for field in fields:
-        #         if other_details[field]:
-        #             doc_details[field] = other_details[field]
+        query_args = {
+            "settings": settings,
+            "fields": ["citation_count", "source_quality", "is_retracted"],
+            **{
+                key: value
+                for key, value in {
+                    # we can do this being sure that the fields exist as PapisProvider
+                    # assigns `None` if a value doesn't exist
+                    "title": doc_details["title"],
+                    "doi": doc_details["doi"],
+                    "authors": doc_details["authors"],
+                    "journal": doc_details["journal"],
+                }.items()
+                if value is not None
+            },
+        }
+        if other_details := await clients["other"].query(**query_args):
+            doc_details = doc_details + other_details
         doc_details.fields_to_overwrite_from_metadata = {
             "citation"
         }  # Restrict what can be overwritten, needed for below
@@ -453,7 +460,7 @@ async def _index_async(query: Optional[str], force: bool) -> None:
     from papis_ask.metadata_provider import PapisProvider
     from paperqa.clients import DocMetadataClient
 
-    # from paperqa.clients.semantic_scholar import SemanticScholarProvider
+    from paperqa.clients.semantic_scholar import SemanticScholarProvider
     from paperqa.clients.journal_quality import JournalQualityPostProcessor
 
     settings = get_settings()
@@ -482,14 +489,14 @@ async def _index_async(query: Optional[str], force: bool) -> None:
         "papis": DocMetadataClient(
             clients={
                 PapisProvider,
+            }
+        ),
+        "other": DocMetadataClient(
+            clients={
+                SemanticScholarProvider,
                 JournalQualityPostProcessor,
             }
         ),
-        # "other": DocMetadataClient(
-        #     clients={
-        #         SemanticScholarProvider,
-        #     }
-        # ),
     }
 
     prev_index_time = (

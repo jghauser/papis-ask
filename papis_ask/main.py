@@ -123,7 +123,7 @@ async def update_index_metadata(
             },
         }
         if other_details := await clients["other"].query(**query_args):
-            doc_details = doc_details + other_details
+            doc_details = other_details + doc_details
         doc_details.fields_to_overwrite_from_metadata = {
             "citation"
         }  # Restrict what can be overwritten, needed for below

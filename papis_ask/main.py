@@ -545,13 +545,22 @@ async def _index_async(query: Optional[str], force: bool) -> None:
 
     # Create a mapping of filenames to dockeys
     index_files_to_dockey: Dict[str, str] = {}
+    malformed_dockeys: Set[str] = set()
     for dockey, doc in docs_index.docs.items():
         file_location = getattr(doc, "file_location", None)
         if file_location is None:
-            raise ValueError(
-                f"Document {dockey} is missing required 'file_location' attribute"
-            )
-        index_files_to_dockey[file_location] = dockey
+            malformed_dockeys.add(dockey)
+        else:
+            index_files_to_dockey[file_location] = dockey
+
+    # sometimes files get added but not properly, we remove them
+    # TODO: we should catch this by deleting docs when upgrading
+    #       to docdetails fails
+    for dockey in malformed_dockeys:
+        remove_document_from_index(docs_index, dockey)
+        logger.warning(
+            f"Removing document '{dockey}' from index because it's missing 'file_location'"
+        )
 
     # check all files in the library
     for papis_id, doc_papis in papis_id_to_doc.items():

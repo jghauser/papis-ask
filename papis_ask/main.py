@@ -28,16 +28,14 @@ settings = None
 FILE_ENDINGS = (".pdf", ".txt", ".html")
 
 
-def remove_document_from_index(docs_index: Any, dockey: str) -> Optional[str]:
+def remove_document_from_index(docs_index: Any, dockey: str) -> Tuple[str, str]:
     """Remove a document from the index."""
     # Get the document from the index
     doc = docs_index.docs.get(dockey)
-    if not doc:
-        logger.warning(f"Document {dockey} not found in index")
-        return None
 
     # Get file_location if it exists
-    file_location = getattr(doc, "file_location", None)
+    file_location = doc.file_location
+    ref = doc.other["ref"]
 
     # Get docname for removal
     docname = doc.docname
@@ -47,7 +45,7 @@ def remove_document_from_index(docs_index: Any, dockey: str) -> Optional[str]:
     docs_index.deleted_dockeys.remove(dockey)
     docs_index.docnames.remove(docname)
 
-    return file_location
+    return file_location, ref
 
 
 def convert_answer_to_json(answer: Any) -> Dict[str, Any]:
@@ -649,9 +647,16 @@ async def _index_async(query: Optional[str], force: bool) -> None:
     counter = 0
     total_files = len(dockeys_to_delete_bc_missing)
     for dockey in dockeys_to_delete_bc_missing:
-        file_location = remove_document_from_index(docs_index, dockey)
+        counter += 1
+        file_location, ref = remove_document_from_index(docs_index, dockey)
         if file_location:
-            logger.info("Removing from index: %s", file_location)
+            logger.info(
+                "%d/%d: Removed %s (%s)",
+                counter,
+                total_files,
+                ref,
+                file_location,
+            )
 
     # index all new files or changed files
     counter = 0

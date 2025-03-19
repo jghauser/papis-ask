@@ -26,12 +26,16 @@ class LocalDocQuery(ClientQuery):
 
     file_location: str
     papis_id: str
+    file_last_indexed: float
+    metadata_last_updated: float
     fields: Optional[List[str]] = None
 
 
 async def parse_papis_to_doc_details(
     doc: Document,
     file_location: str,
+    file_last_indexed: float,
+    metadata_last_updated: float,
 ) -> DocDetails:
     """Convert Papis document metadata to DocDetails format."""
 
@@ -73,7 +77,13 @@ async def parse_papis_to_doc_details(
 
     # Add any additional fields to the 'other' dict
     for key, value in (
-        doc | {"client_source": ["papis"], "bibtex_source": [bibtex_source]}
+        doc
+        | {
+            "client_source": ["papis"],
+            "bibtex_source": [bibtex_source],
+            "file_last_indexed": file_last_indexed,
+            "metadata_last_updated": metadata_last_updated,
+        }
     ).items():
         if key not in doc_details.model_fields:
             if key in doc_details.other:
@@ -87,6 +97,8 @@ async def parse_papis_to_doc_details(
 async def get_doc_details_from_papis(
     papis_id: str,
     file_location: str,
+    file_last_indexed: float,
+    metadata_last_updated: float,
     fields: Optional[List[str]] = None,
     docs_by_id: Optional[Dict[str, Any]] = None,
 ) -> Optional[DocDetails]:
@@ -106,9 +118,16 @@ async def get_doc_details_from_papis(
             filtered_doc_papis = Document(
                 data={k: v for k, v in doc_papis.items() if k in fields}
             )
-            return await parse_papis_to_doc_details(filtered_doc_papis, file_location)
+            return await parse_papis_to_doc_details(
+                filtered_doc_papis,
+                file_location,
+                file_last_indexed,
+                metadata_last_updated,
+            )
 
-        return await parse_papis_to_doc_details(doc_papis, file_location)
+        return await parse_papis_to_doc_details(
+            doc_papis, file_location, file_last_indexed, metadata_last_updated
+        )
 
     except Exception as e:
         logger.error(f"Error getting Papis document {papis_id}: {str(e)}")
@@ -132,6 +151,8 @@ class PapisProvider(MetadataProvider[LocalDocQuery]):
             papis_id=query.papis_id,
             file_location=query.file_location,
             fields=query.fields,
+            file_last_indexed=query.file_last_indexed,
+            metadata_last_updated=query.metadata_last_updated,
             docs_by_id=self.__class__._docs_by_id,
         )
 

@@ -2,6 +2,7 @@ import pickle
 import os
 import re
 import json
+import time
 from pathlib import Path
 from typing import Any, Dict, Optional, Set, Tuple
 
@@ -82,27 +83,42 @@ async def add_file_to_index(
 
     ref, _, _ = extract_doc_papis_metadata(doc_papis)
 
-    if docname := await docs_index.aadd(
-        file_path,
-        dockey=dockey,
-        docname=ref,  # to give somewhat sensible docnames (we don't depend on it)
-        citation=ref,  # to avoid unnecessary llm calls
-        settings=settings,
-    ):
-        if ref := await update_index_metadata(
-            file_path=file_path,
+    try:
+        if docname := await docs_index.aadd(
+            file_path,
             dockey=dockey,
-            docname=docname,
-            doc_papis=doc_papis,
-            docs_index=docs_index,
-            clients=clients,
+            docname=ref,  # to give somewhat sensible docnames (we don't depend on it)
+            citation=ref,  # to avoid unnecessary llm calls
             settings=settings,
         ):
-            return ref
+            if ref := await update_index_metadata(
+                file_path=file_path,
+                file_last_indexed=time.time(),
+                dockey=dockey,
+                docname=docname,
+                doc_papis=doc_papis,
+                docs_index=docs_index,
+                clients=clients,
+                settings=settings,
+            ):
+                return ref
+            else:
+                logger.warning("Couldn't upgrade Doc to DocDetails.")
+
+    except ValueError as e:
+        if "This does not look like a text document" in str(e):
+            logger.warning(f"File not recognised as text document: {file_path}")
+            logger.warning("Usually, this means the file is faulty or not ocr'ed")
+        else:
+            # Re-raise other ValueErrors
+            raise
+
+    return None
 
 
 async def update_index_metadata(
     file_path: Path,
+    file_last_indexed: float,
     dockey: str,
     docname: str,
     doc_papis: Dict[str, Any],
@@ -119,6 +135,8 @@ async def update_index_metadata(
         settings=settings,
         papis_id=papis_id,
         file_location=str(file_path),
+        file_last_indexed=file_last_indexed,
+        metadata_last_updated=time.time(),
     ):
         query_args = {
             "settings": settings,
@@ -373,19 +391,44 @@ def extract_doc_papis_metadata(
     return ref, papis_id, doi
 
 
-def needs_indexing(
-    file_path: Path, index_files_to_dockey: Dict[str, str], prev_index_time: float
-) -> bool:
-    """Determine if a file needs to be indexed based on presence in index and modification time."""
-    # Check if file exists in the index
-    if str(file_path) not in index_files_to_dockey:
-        # File not in index, needs indexing
-        return True
+def determine_file_status(
+    file_path: Path,
+    info_yaml_path: Path,
+    index_files_to_dockey: Dict[str, str],
+    docs_index: Any,
+) -> Tuple[bool, bool]:
+    """Determine if a file needs to be re-indexed or just have its metadata updated."""
+    dockey = index_files_to_dockey.get(str(file_path))
 
-    # File exists in index, check if it's been modified since it was indexed
+    # If file isn't in the index, it needs indexing
+    if dockey is None:
+        return True, False
+
+    doc = docs_index.docs.get(dockey)
+    if doc is None:
+        return True, False
+
+    # Get timestamps
     file_last_modified = get_last_modified(file_path)
+    info_yaml_last_modified = (
+        get_last_modified(info_yaml_path) if info_yaml_path.exists() else 0
+    )
 
-    return file_last_modified > prev_index_time
+    # Get stored timestamps
+    file_last_indexed = getattr(doc, "other", {}).get("file_last_indexed", 0)
+    metadata_last_updated = getattr(doc, "other", {}).get("metadata_last_updated", 0)
+
+    # Check if file content has changed since last indexing
+    needs_indexing = file_last_modified > file_last_indexed
+
+    # Check if metadata has changed since last update
+    needs_metadata_update = info_yaml_last_modified > metadata_last_updated
+
+    # If we need to re-index, we don't need to separately update metadata
+    if needs_indexing:
+        needs_metadata_update = False
+
+    return needs_indexing, needs_metadata_update
 
 
 @click.group("ask", cls=DefaultGroup, default="query", default_if_no_args=True)
@@ -530,12 +573,6 @@ async def _index_async(query: Optional[str], force: bool) -> None:
         ),
     }
 
-    prev_index_time = (
-        get_last_modified(get_index_file())
-        if get_index_file().exists() and not force
-        else 0
-    )
-
     files_to_index: Set[Tuple[Path, str]] = set()
     files_to_update_metadata: Set[Tuple[Path, str]] = set()
     files_to_delete: Set[Path] = set()
@@ -545,22 +582,6 @@ async def _index_async(query: Optional[str], force: bool) -> None:
 
     # Create a mapping of filenames to dockeys
     index_files_to_dockey: Dict[str, str] = {}
-    malformed_dockeys: Set[str] = set()
-    for dockey, doc in docs_index.docs.items():
-        file_location = getattr(doc, "file_location", None)
-        if file_location is None:
-            malformed_dockeys.add(dockey)
-        else:
-            index_files_to_dockey[file_location] = dockey
-
-    # sometimes files get added but not properly, we remove them
-    # TODO: we should catch this by deleting docs when upgrading
-    #       to docdetails fails
-    for dockey in malformed_dockeys:
-        remove_document_from_index(docs_index, dockey)
-        logger.warning(
-            f"Removing document '{dockey}' from index because it's missing 'file_location'"
-        )
 
     # check all files in the library
     for papis_id, doc_papis in papis_id_to_doc.items():
@@ -573,16 +594,21 @@ async def _index_async(query: Optional[str], force: bool) -> None:
             if file_ending in FILE_ENDINGS:
                 files_on_disk.add(file_path)
 
-                # Use the function to check if we need to index this file
-                if needs_indexing(file_path, index_files_to_dockey, prev_index_time):
+                # Skip processing if force is enabled (everything will be re-indexed)
+                if force:
+                    files_to_index.add((file_path, papis_id))
+                    continue
+
+                # Use the function to determine file status
+                needs_indexing, needs_metadata_update = determine_file_status(
+                    file_path, info_yaml_path, index_files_to_dockey, docs_index
+                )
+
+                if needs_indexing:
                     logger.debug(f"File {file_path} needs to be indexed")
                     files_to_index.add((file_path, papis_id))
-
-            # Figure out which documents need to have metadata updated
-            if info_yaml_path.exists():
-                # Either check if metadata in index is outdated or simply use timestamp logic
-                info_yaml_last_modified = get_last_modified(info_yaml_path)
-                if info_yaml_last_modified > prev_index_time:
+                elif needs_metadata_update:
+                    logger.debug(f"File {file_path} needs metadata update")
                     files_to_update_metadata.add((file_path, papis_id))
 
     logger.info(f"{len(files_to_index)} file(s) will be indexed")
@@ -648,15 +674,16 @@ async def _index_async(query: Optional[str], force: bool) -> None:
         else:
             logger.warning("Failed to index file: %s", file_path)
 
+    # update metadata for papis documents that have changed
     counter = 0
     total_files = len(files_to_update_metadata)
-    # update metadata for papis documents that have changed
     for file_path, papis_id in files_to_update_metadata:
         counter += 1
 
         doc_papis = papis_id_to_doc[papis_id]
         dockey = index_files_to_dockey.get(str(file_path))
         docname = docs_index.docs[dockey].docname
+        file_last_indexed = docs_index.docs[dockey].other["file_last_indexed"]  # type: ignore (they should all be DocDetails)
 
         if not dockey:
             logger.warning(
@@ -666,6 +693,7 @@ async def _index_async(query: Optional[str], force: bool) -> None:
             continue
         if ref := await update_index_metadata(
             file_path=file_path,
+            file_last_indexed=file_last_indexed,
             doc_papis=doc_papis,
             docs_index=docs_index,
             dockey=dockey,

@@ -625,7 +625,18 @@ async def _index_async(query: Optional[str], force: bool) -> None:
     files_to_delete = {
         Path(file) for file in index_files_to_dockey.keys()
     } - files_on_disk
-    logger.info(f"{len(files_to_delete)} file(s) will be deleted from the index")
+    logger.info(f"{len(files_to_delete)} file(s) will be removed from the index")
+
+    unchanged_files = max(
+        0,
+        (
+            len(index_files_to_dockey)
+            - len(files_to_update_metadata)
+            - len(files_to_index)
+            - len(files_to_delete)
+        ),
+    )
+    logger.info(f"{unchanged_files} file(s) will remain unchanged")
 
     # Find files to be deleted because they don't exist on disk anymore
     dockeys_to_delete_bc_missing: Set[str] = {

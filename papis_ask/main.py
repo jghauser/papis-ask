@@ -536,6 +536,7 @@ async def _index_async(query: Optional[str], force: bool) -> None:
 
     from paperqa.clients.semantic_scholar import SemanticScholarProvider
     from paperqa.clients.journal_quality import JournalQualityPostProcessor
+    from paperqa.types import DocDetails
 
     settings = get_settings()
 
@@ -582,6 +583,9 @@ async def _index_async(query: Optional[str], force: bool) -> None:
 
     # Create a mapping of filenames to dockeys
     index_files_to_dockey: Dict[str, str] = {}
+    for dockey, doc in docs_index.docs.items():
+        if type(doc) is DocDetails and hasattr(doc, "file_location"):
+            index_files_to_dockey[str(doc["file_location"])] = dockey
 
     # check all files in the library
     for papis_id, doc_papis in papis_id_to_doc.items():
@@ -682,33 +686,37 @@ async def _index_async(query: Optional[str], force: bool) -> None:
 
         doc_papis = papis_id_to_doc[papis_id]
         dockey = index_files_to_dockey.get(str(file_path))
-        docname = docs_index.docs[dockey].docname
-        file_last_indexed = docs_index.docs[dockey].other["file_last_indexed"]  # type: ignore (they should all be DocDetails)
+        doc_index = docname = docs_index.docs[dockey]
+        docname = doc_index.docname
+        if type(doc_index) is DocDetails:
+            file_last_indexed = docs_index.docs[dockey].other["file_last_indexed"]  # type: ignore (they should all be DocDetails)
 
-        if not dockey:
-            logger.warning(
-                "File %s is not in the index, skipping metadata update",
-                file_path,
-            )
-            continue
-        if ref := await update_index_metadata(
-            file_path=file_path,
-            file_last_indexed=file_last_indexed,
-            doc_papis=doc_papis,
-            docs_index=docs_index,
-            dockey=dockey,
-            docname=docname,
-            clients=clients,
-            settings=settings,
-        ):
-            logger.info(
-                "%d/%d: Updated metadata for %s (%s)",
-                counter,
-                total_files,
-                ref,
-                file_path.name,
-            )
+            if not dockey:
+                logger.warning(
+                    "File %s is not in the index, skipping metadata update",
+                    file_path,
+                )
+                continue
+            if ref := await update_index_metadata(
+                file_path=file_path,
+                file_last_indexed=file_last_indexed,
+                doc_papis=doc_papis,
+                docs_index=docs_index,
+                dockey=dockey,
+                docname=docname,
+                clients=clients,
+                settings=settings,
+            ):
+                logger.info(
+                    "%d/%d: Updated metadata for %s (%s)",
+                    counter,
+                    total_files,
+                    ref,
+                    file_path.name,
+                )
+            else:
+                logger.warning("Failed to update metadata for file: %s", file_path)
         else:
-            logger.warning("Failed to update metadata for file: %s", file_path)
+            logger.warning(f"Skipped {file_path} because it is not a DocDetails object")
 
     save_index(docs_index)

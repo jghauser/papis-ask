@@ -639,16 +639,16 @@ async def _index_async(query: Optional[str], force: bool) -> None:
     logger.info(f"{unchanged_files} file(s) will remain unchanged")
 
     # Find files to be deleted because they don't exist on disk anymore
-    dockeys_to_delete_bc_missing: Set[str] = {
+    dockeys_to_delete_bc_missing: list[str] = [
         index_files_to_dockey[str(file)] for file in files_to_delete
-    }
+    ]
 
     # find files to be deleted because they changed and will be replaced with new ones
-    dockeys_to_delete_bc_updated: Set[str] = {
+    dockeys_to_delete_bc_updated: list[str] = [
         index_files_to_dockey[str(file)]
         for file, _ in files_to_index
         if str(file) in index_files_to_dockey
-    }
+    ]
 
     # Delete files that have been updated (to avoid having duplicates of same file with different hashes)
     for dockey in dockeys_to_delete_bc_updated:

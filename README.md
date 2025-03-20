@@ -1,8 +1,8 @@
 # Papis-ask
 
-This plugin for [Papis](https://github.com/papis/papis) integrates [paper-qa](https://github.com/whitead/paper-qa/) to provide intelligent document search and question answering capabilities using natural language. You can set it up to use a variety of local and online LLMs. It is inspired by [isaksamsten](https://github.com/isaksamsten)'s excellent work on [papisqa](https://github.com/isaksamsten/papisqa).
+This plugin for [Papis](https://github.com/papis/papis) integrates [paper-qa](https://github.com/whitead/paper-qa/) to allow you to use LLMs to ask questions about your library. Use it to search for documents or have it explain things to you. You can set it up to use a variety of local and online models. It is inspired by [isaksamsten](https://github.com/isaksamsten)'s excellent work on [papisqa](https://github.com/isaksamsten/papisqa).
 
-This is under active development. Expect bugs and changes.
+Papis-ask is under active development. Expect bugs and changes.
 
 ## Installation
 
@@ -85,11 +85,15 @@ ask-summary-llm = "your-preferred-summary-llm-model"
 ask-embedding = "your-preferred-embedding-model"
 ```
 
-I've had decent success using "ollama/nomic-embed-text" to create the embeddings locally.
+I've had decent success using "ollama/nomic-embed-text" to create embeddings locally.
 
 ## Preparation
 
-You might want to use the `contrib/ocrpdf.sh` script to OCR all PDFs that are missing embedded texts. The script is semi-smart at detecting which PDFs need to be processed and doesn't mess with annotations. Create backups and use at your own risk.
+Papis-ask assumes various things about the state of your library: it assumes that your pdf files contain text and that metadata is complete and correct. There are various scripts in the `contrib` folder that can help you making sure the library is in a good state. Create backups and use at your own risk.
+
+You might want to use the `ocrpdf.sh` script to OCR all PDFs that are missing embedded texts. The script is semi-smart at detecting which PDFs need to be processed and doesn't mess with annotations.
+
+The `editor-author-list.py` and `fix-months.sh` scripts help fix the metadata in your `info.yaml` files. The first creates `author_list` and `editor_list` fields from `author` and `editor` fields, respectively. The second converts the `month` fields to an integer. Additionally, I suggest to use `papis doctor` to make sure the library doesn't contain any errors. Files will be indexed even if metadata is missing or false, but such mistakes might impact response quality.
 
 ## Commands
 
@@ -100,6 +104,8 @@ Before querying, you need to index your library:
 ```bash
 $ papis ask index
 ```
+
+Note that this can take a long time if you're indexing your whole library. Progress is saved after each document, and it's hence possible to interrupt the commmand and continue later.
 
 You can also index specific documents (note that this will remove documents that *don't* match the query from the index):
 
@@ -130,6 +136,16 @@ $ papis ask "My question" --to-json         # Output in JSON format (default: Fa
 $ papis ask "My question" --evidence-k 20   # Retrieve 20 pieces of evidence (default: 10)
 $ papis ask "My question" --max-sources 10   # Use up to 10 sources in the answer (default: 5)
 ```
+
+## Troubleshooting
+
+### Papis library cache
+
+Make sure your papis library's cache is up-to-date. Run `papis cache reset` when in doubt.
+
+### Semantic Scholar
+
+Papis-ask is querying Semantic Scholar for some metadata. This service is quite strictly rate-limited. Getting your own api key can help, though unfortunately there seems to be a long waitlist. Otherwise, rerunning the command is the only option at the moment.
 
 ## Screenshots
 

@@ -47,8 +47,8 @@ async def parse_papis_to_doc_details(
     if year:
         publication_date = datetime(int(year), 1, 1)
 
-    # Handle authors
-    author_list = doc.get("author_list")
+    # Handle authors (fall back to editors if there are no authors)
+    author_list = doc.get("author_list", doc.get("editor_list"))
     if author_list:
         authors = [
             f"{author.get('given', '').title()} {author.get('family', '').title()}".strip()

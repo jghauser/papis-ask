@@ -102,6 +102,7 @@ async def add_file_to_index(
                 return ref
             else:
                 logger.warning("Couldn't upgrade Doc to DocDetails.")
+                logger.warning("Usually, this means the 'info.yaml' has faults.")
 
     except ValueError as e:
         if "This does not look like a text document" in str(e):

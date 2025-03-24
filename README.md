@@ -87,6 +87,16 @@ ask-embedding = "your-preferred-embedding-model"
 
 I've had decent success using "ollama/nomic-embed-text" to create embeddings locally.
 
+Additionally, you can set the settings that define defaults for the plugin's arguments. See the section on commands below for further information on what these settings do.
+
+```
+ask-evidence-k = 10,
+ask-max-sources = 5,
+ask-answer-length = "about 200 words, but can be longer",
+ask-context = True,
+ask-excerpt = False,
+```
+
 ## Preparation
 
 Papis-ask assumes various things about the state of your library: it assumes that your pdf files contain text and that metadata is complete and correct. There are various scripts in the `contrib` folder that can help you making sure the library is in a good state. Create backups and use at your own risk.
@@ -130,10 +140,11 @@ $ papis ask "What is the relationship between X and Y?"
 Control the output format and level of detail:
 
 ```bash
-$ papis ask "My question" --context         # Show context for each source (default: False)
-$ papis ask "My question" --excerpt         # Show context with excerpts (default: False)
-$ papis ask "My question" --to-json         # Output in JSON format (default: False)
-$ papis ask "My question" --evidence-k 20   # Retrieve 20 pieces of evidence (default: 10)
+$ papis ask "My question" --no-context       # Don't show context for each source (default: False)
+$ papis ask "My question" --excerpt          # Show context with excerpts (default: False)
+$ papis ask "My question" --to-json          # Output in JSON format (default: False)
+$ papis ask "My question" --answer-length    # Length of answer (default: "about 200 words, but can be longer")
+$ papis ask "My question" --evidence-k 20    # Retrieve 20 pieces of evidence (default: 10)
 $ papis ask "My question" --max-sources 10   # Use up to 10 sources in the answer (default: 5)
 ```
 

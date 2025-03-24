@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional, Set, Tuple
 
 import papis.cli
 import papis.config
+from papis.config import get_lib
 from papis.api import get_all_documents_in_lib
 import papis.logging
 from papis.utils import get_cache_home
@@ -20,6 +21,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from rich.table import Table
+
+from papis_ask.config import SECTION_NAME, create_paper_qa_settings
 
 logger = papis.logging.get_logger(__name__)
 
@@ -312,24 +315,6 @@ def format_answer(
             )
 
 
-def get_settings():
-    from paperqa import Settings
-
-    settings = Settings()
-
-    llm = papis.config.get("ask-llm")
-    if llm:
-        settings.llm = llm
-    summary_llm = papis.config.get("ask-summary-llm")
-    if summary_llm:
-        settings.summary_llm = summary_llm
-    embedding = papis.config.get("ask-embedding")
-    if embedding:
-        settings.embedding = embedding
-    settings.parsing.use_doc_details = False
-    return settings
-
-
 def to_latex_math(text: str) -> str:
     return (
         text.replace(r"\(", "$")
@@ -341,7 +326,7 @@ def to_latex_math(text: str) -> str:
 
 def get_index_file() -> Path:
     """Get the path of the paperqa index file."""
-    return Path(get_cache_home()) / "{}.qa".format(papis.config.get_lib().name)
+    return Path(get_cache_home()) / "{}.qa".format(get_lib().name)
 
 
 def get_last_modified(file_path: Path) -> float:
@@ -446,30 +431,25 @@ def cli():
     "-e",
     help="Number of evidence pieces to retrieve",
     type=int,
-    default=10,
+    default=lambda: papis.config.getint("evidence-k", SECTION_NAME),
 )
 @click.option(
     "--max-sources",
     "-m",
-    help="Max number of sources for an answer",
+    help="Maximum number of sources for an answer",
     type=int,
-    default=5,
+    default=lambda: papis.config.getint("max-sources", SECTION_NAME),
 )
 @click.option(
-    "--context",
     "-c",
     help="Show context for each source",
-    type=bool,
-    default=False,
-    is_flag=True,
+    default=lambda: papis.config.getboolean("context", SECTION_NAME),
 )
-@click.option(
-    "--excerpt",
+@papis.cli.bool_flag(
+    "--excerpt/--no-excerpt",
     "-x",
     help="Show context including excerpt for each source",
-    type=bool,
-    default=False,
-    is_flag=True,
+    default=lambda: papis.config.getboolean("excerpt", SECTION_NAME),
 )
 def query_cmd(
     query: str,
@@ -484,14 +464,13 @@ def query_cmd(
         f"Starting 'ask' with query={query}, to_json={to_json}, evidence_k={evidence_k}, max_sources={max_sources}, context={context}, excerpt={excerpt} "
     )
 
-    settings = get_settings()
+    settings = create_paper_qa_settings()
+    settings.answer.answer_max_sources = max_sources
+    settings.answer.evidence_k = evidence_k
 
     if evidence_k <= max_sources:
         logger.error("evidence_k must be larger than max_source")
         return
-
-    settings.answer.answer_max_sources = max_sources
-    settings.answer.evidence_k = evidence_k
 
     docs_index = get_index()
 
@@ -537,7 +516,7 @@ async def _index_async(query: Optional[str], force: bool) -> None:
     from paperqa.clients.journal_quality import JournalQualityPostProcessor
     from paperqa.types import DocDetails
 
-    settings = get_settings()
+    settings = create_paper_qa_settings()
 
     docs_index = get_index()
     if docs_index is None or force:

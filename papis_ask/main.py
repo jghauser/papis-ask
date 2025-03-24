@@ -441,6 +441,14 @@ def cli():
     default=lambda: papis.config.getint("max-sources", SECTION_NAME),
 )
 @click.option(
+    "--answer-length",
+    "-l",
+    help="Length of the answer",
+    type=str,
+    default=lambda: papis.config.getstring("answer-length", SECTION_NAME),
+)
+@papis.cli.bool_flag(
+    "--context/--no-context",
     "-c",
     help="Show context for each source",
     default=lambda: papis.config.getboolean("context", SECTION_NAME),
@@ -456,17 +464,19 @@ def query_cmd(
     to_json: bool,
     evidence_k: int,
     max_sources: int,
+    answer_length: str,
     context: bool,
     excerpt: bool,
 ) -> None:
     """Ask questions about your library"""
     logger.debug(
-        f"Starting 'ask' with query={query}, to_json={to_json}, evidence_k={evidence_k}, max_sources={max_sources}, context={context}, excerpt={excerpt} "
+        f"Starting 'ask' with query={query}, to_json={to_json}, evidence_k={evidence_k}, max_sources={max_sources}, answer_length={answer_length}, context={context}, excerpt={excerpt} "
     )
 
     settings = create_paper_qa_settings()
     settings.answer.answer_max_sources = max_sources
     settings.answer.evidence_k = evidence_k
+    settings.answer.answer_length = answer_length
 
     if evidence_k <= max_sources:
         logger.error("evidence_k must be larger than max_source")

@@ -7,6 +7,7 @@ DEFAULTS: PapisConfigType = {
     SECTION_NAME: {
         "evidence-k": 10,
         "max-sources": 5,
+        "answer-length": "about 200 words, but can be longer",
         "context": True,
         "excerpt": False,
     }
@@ -31,6 +32,9 @@ def create_paper_qa_settings():
     settings.answer.evidence_k = (
         papis.config.getint("evidence-k", SECTION_NAME)
         or DEFAULTS[SECTION_NAME]["evidence-k"]  # TODO: redundancy
+    )
+    settings.answer.answer_length = papis.config.getstring(
+        "answer_length", SECTION_NAME
     )
     settings.parsing.use_doc_details = False
     return settings

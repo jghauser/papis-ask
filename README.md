@@ -90,11 +90,11 @@ I've had decent success using "ollama/nomic-embed-text" to create embeddings loc
 Additionally, you can set the settings that define defaults for the plugin's arguments. See the section on commands below for further information on what these settings do.
 
 ```
-ask-evidence-k = 10,
-ask-max-sources = 5,
-ask-answer-length = "about 200 words, but can be longer",
-ask-context = True,
-ask-excerpt = False,
+ask-evidence-k = 10
+ask-max-sources = 5
+ask-answer-length = "about 200 words, but can be longer"
+ask-context = True
+ask-excerpt = False
 ```
 
 ## Preparation

@@ -154,11 +154,17 @@ def to_json_output(answer: Any) -> str:
     output = {
         "question": answer.question,
         "answer": answer.answer,
-        "references": [context.text.name for context in answer.contexts],
+        "references": [
+            {
+                "papis_id": context.text.doc.other.get("papis_id"),
+                "pages": context.text.doc.pages,
+            }
+            for context in answer.contexts
+        ],
         "contexts": [
             {
-                "name": context.text.name,
-                "pages": context.text.pages,
+                "papis_id": context.text.doc.other.get("papis_id"),
+                "pages": context.text.doc.pages,
                 "summary": context.context,
                 "score": context.score,
                 "excerpt": context.text.text,

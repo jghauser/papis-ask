@@ -19,16 +19,6 @@
           fhlmi = import ./nix/pkgs/fhlmi {inherit pkgs python3Packages;};
           fhaviary = import ./nix/pkgs/fhaviary {inherit pkgs python3Packages;};
           tantivy = import ./nix/pkgs/tantivy {inherit pkgs python3Packages;};
-          # we want this version of litellm that's not yet in nixpkgs for support of newer llms
-          litellm = super.litellm.overrideAttrs (oldAttrs: rec {
-            version = "1.61.20-stable";
-            src = pkgs.fetchFromGitHub {
-              owner = "BerriAI";
-              repo = "litellm";
-              rev = "refs/tags/v${version}";
-              hash = "sha256-bWSvDTrJdi9CRvDwCZ4Up81VQjxARfBfg8t/5LsQkPo=";
-            };
-          });
           # we need this specific older version of pydantic
           pydantic = super.pydantic.overrideAttrs (oldAttrs: rec {
             version = "2.10.1";

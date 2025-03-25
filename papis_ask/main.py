@@ -1,7 +1,5 @@
 import pickle
 import os
-import re
-import json
 import time
 from pathlib import Path
 from typing import Any, Dict, Optional, Set, Tuple
@@ -17,12 +15,13 @@ import click
 from click_default_group import DefaultGroup
 import asyncio
 
-from rich.console import Console
-from rich.panel import Panel
-from rich.text import Text
-from rich.table import Table
-
 from papis_ask.config import SECTION_NAME, create_paper_qa_settings
+from papis_ask.output import (
+    to_terminal_output,
+    to_json_output,
+    to_markdown_output,
+    transform_answer,
+)
 
 logger = papis.logging.get_logger(__name__)
 
@@ -49,25 +48,6 @@ def remove_document_from_index(docs_index: Any, dockey: str) -> Tuple[str, str]:
     docs_index.docnames.remove(docname)
 
     return file_location, ref
-
-
-def convert_answer_to_json(answer: Any) -> Dict[str, Any]:
-    """Convert the answer object to a JSON-serializable dictionary."""
-    return {
-        "question": answer.question,
-        "answer": answer.answer,
-        "references": [context.text.name for context in answer.contexts],
-        "contexts": [
-            {
-                "name": context.text.name,
-                "pages": context.text.pages,
-                "summary": to_latex_math(context.context),
-                "score": context.score,
-                "excerpt": context.text.text,
-            }
-            for context in answer.contexts
-        ],
-    }
 
 
 async def add_file_to_index(
@@ -188,142 +168,6 @@ async def update_index_metadata(
         return ref
 
 
-def transform_answer(answer: Any) -> Any:
-    """Transform the answer to format references correctly using Papis references."""
-    # Create a mapping of document names to references
-    docname_to_ref = {}
-
-    # First pass: collect all document names and their references
-    for context in answer.contexts:
-        ref = context.text.doc.other.get("ref", context.text.doc.other.get("papis_id"))
-        ref = f"@{ref}"
-        context.text.doc.pages = context.text.name.split()[2]
-        docname_to_ref[context.text.name.split()[0]] = ref
-
-    # Replace references in the answer text
-    # Pattern: (docname pages X-N) -> [@ref, p. X-N]
-    def replace_citation(match):
-        docname = match.group(1)
-        pages = match.group(2)
-
-        ref = docname_to_ref.get(docname, docname)
-        # Format pages as p. X-N
-        formatted_pages = f"p. {pages}" if pages else ""
-
-        if formatted_pages:
-            return f"[{ref}, {formatted_pages}]"
-        else:
-            return f"[{ref}]"
-
-    # Pattern to match citations like (@docname pages X-N)
-    citation_pattern = r"\(([^)\s]+?)(?:\s+pages\s+([^)]+))?\)"
-    answer.answer = re.sub(citation_pattern, replace_citation, answer.answer)
-
-    return answer
-
-
-def format_answer(
-    answer: Any,
-    context: bool,
-    excerpt: bool,
-) -> None:
-    """Format and print the answer with optional context and excerpts."""
-    console = Console()
-
-    # Format question
-    question_md = Text(answer.question)
-    console.print(
-        Panel(
-            question_md,
-            title=Text("Question", style="magenta bold"),
-            border_style="bright_black",
-        )
-    )
-
-    # Create a Text object for the answer
-    answer_text = Text(answer.answer)
-
-    # Define a regex pattern for citations like [@XYZ]
-    citation_pattern = r"\[@[^\]]+\]"
-
-    # Highlight all matches in blue
-    answer_text.highlight_regex(citation_pattern, style="blue")
-
-    # Display in panel
-    console.print(
-        Panel(
-            answer_text,
-            title=Text("Answer", style="green bold"),
-            border_style="bright_black",
-        )
-    )
-
-    # Create references with colored names
-    references = []
-    for answer_context in answer.contexts:
-        filename = Path(answer_context.text.doc.file_location).name
-        ref = answer_context.text.doc.other.get(
-            "ref", answer_context.text.doc.other.get("papis_id")
-        )
-        pages = answer_context.text.doc.pages
-        reference_line = Text("- ")
-        reference_line.append(f"@{ref}, p. {pages}", style="blue")
-        reference_line.append(f" ({filename})")
-        references.append(reference_line)
-
-    from rich.console import Group
-
-    references_group = Group(*references)
-    console.print(
-        Panel(
-            references_group,
-            title=Text("References", style="yellow bold"),
-            border_style="bright_black",
-        )
-    )
-
-    # Format context if requested
-    if context or excerpt:
-        for answer_context in answer.contexts:
-            # Format summary
-            summary = to_latex_math(answer_context.context)
-            summary_table = Table(show_header=False, box=None)
-            summary_table.add_row(Text("Summary:", style="bold"), Text(summary))
-            summary_table.add_row(
-                Text("Score:", style="bold"), Text(str(answer_context.score))
-            )
-            if excerpt:
-                summary_table.add_row(
-                    Text("Excerpt:", style="bold"), Text(answer_context.text.text)
-                )
-
-            # Print context
-            filename = Path(answer_context.text.doc.file_location).name
-            ref = answer_context.text.doc.other.get(
-                "ref", answer_context.text.doc.other.get("papis_id")
-            )
-            pages = answer_context.text.doc.pages
-            title = Text()
-            title.append(f"@{ref}, p. {pages}", style="blue bold")
-            title.append(f" ({filename})", style="white")
-            console.print(
-                Panel(
-                    summary_table,
-                    title=Text("\n") + title,  # Add newline before the title
-                    border_style="bright_black",
-                )
-            )
-
-
-def to_latex_math(text: str) -> str:
-    return (
-        text.replace(r"\(", "$")
-        .replace(r"\)", "$")
-        .replace(r"\[", "$$")
-        .replace(r"\]", "$$")
-    )
-
-
 def get_index_file() -> Path:
     """Get the path of the paperqa index file."""
     return Path(get_cache_home()) / "{}.qa".format(get_lib().name)
@@ -425,7 +269,13 @@ def cli():
 @cli.command("query")
 @click.argument("query", type=str)
 @click.help_option("--help", "-h")
-@papis.cli.bool_flag("--to-json", "-j", help="Json output", type=bool, default=False)
+@click.option(
+    "--output",
+    "-o",
+    help="Output format",
+    type=str,
+    default=lambda: papis.config.getint("output", SECTION_NAME),
+)
 @click.option(
     "--evidence-k",
     "-e",
@@ -461,7 +311,7 @@ def cli():
 )
 def query_cmd(
     query: str,
-    to_json: bool,
+    output: str,
     evidence_k: int,
     max_sources: int,
     answer_length: str,
@@ -470,7 +320,7 @@ def query_cmd(
 ) -> None:
     """Ask questions about your library"""
     logger.debug(
-        f"Starting 'ask' with query={query}, to_json={to_json}, evidence_k={evidence_k}, max_sources={max_sources}, answer_length={answer_length}, context={context}, excerpt={excerpt} "
+        f"Starting 'ask' with query={query}, output={output}, evidence_k={evidence_k}, max_sources={max_sources}, answer_length={answer_length}, context={context}, excerpt={excerpt} "
     )
 
     settings = create_paper_qa_settings()
@@ -487,13 +337,15 @@ def query_cmd(
     if docs_index:
         answer = docs_index.query(query, settings=settings)
         answer = transform_answer(answer)
-        answer.answer = to_latex_math(answer.answer)
 
-        if to_json:
-            output = convert_answer_to_json(answer)
-            print(json.dumps(output, indent=2))
+        if output == "json":
+            output = to_json_output(answer)
+            print(output)
+        elif output == "markdown":
+            output = to_markdown_output(answer, context, excerpt)
+            print(output)
         else:
-            format_answer(answer, context, excerpt)
+            to_terminal_output(answer, context, excerpt)
 
     else:
         logger.info(

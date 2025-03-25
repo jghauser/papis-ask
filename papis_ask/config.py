@@ -10,6 +10,7 @@ DEFAULTS: PapisConfigType = {
         "answer-length": "about 200 words, but can be longer",
         "context": True,
         "excerpt": False,
+        "output": "terminal",
     }
 }
 

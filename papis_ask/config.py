@@ -34,7 +34,7 @@ def create_paper_qa_settings():
         or DEFAULTS[SECTION_NAME]["evidence-k"]  # TODO: redundancy
     )
     settings.answer.answer_length = papis.config.getstring(
-        "answer_length", SECTION_NAME
+        "answer-length", SECTION_NAME
     )
     settings.parsing.use_doc_details = False
     return settings

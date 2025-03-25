@@ -140,12 +140,12 @@ $ papis ask "What is the relationship between X and Y?"
 Control the output format and level of detail:
 
 ```bash
-$ papis ask "My question" --no-context       # Don't show context for each source (default: False)
-$ papis ask "My question" --excerpt          # Show context with excerpts (default: False)
-$ papis ask "My question" --to-json          # Output in JSON format (default: False)
-$ papis ask "My question" --answer-length    # Length of answer (default: "about 200 words, but can be longer")
-$ papis ask "My question" --evidence-k 20    # Retrieve 20 pieces of evidence (default: 10)
-$ papis ask "My question" --max-sources 10   # Use up to 10 sources in the answer (default: 5)
+$ papis ask "My question" --context/no-context    # Show context for each source (default: True)
+$ papis ask "My question" --excerpt/no-excerpt    # Show context with excerpts (default: False)
+$ papis ask "My question" --output markdown       # Output format, one of terminal/markdown/json (default: terminal)
+$ papis ask "My question" --answer-length short   # Length of answer (default: "about 200 words, but can be longer")
+$ papis ask "My question" --evidence-k 20         # Retrieve 20 pieces of evidence (default: 10)
+$ papis ask "My question" --max-sources 10        # Use up to 10 sources in the answer (default: 5)
 ```
 
 ## Troubleshooting

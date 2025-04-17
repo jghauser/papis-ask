@@ -1,6 +1,6 @@
 # Papis-ask
 
-This plugin for [Papis](https://github.com/papis/papis) integrates [paper-qa](https://github.com/whitead/paper-qa/) to allow you to use LLMs to ask questions about your library. Use it to search for documents or have it explain things to you. You can set it up to use a variety of local and online models. It is inspired by [isaksamsten](https://github.com/isaksamsten)'s excellent work on [papisqa](https://github.com/isaksamsten/papisqa).
+This plugin for [Papis](https://github.com/papis/papis) integrates [paper-qa](https://github.com/Future-House/paper-qa) to allow you to use LLMs to ask questions about your library. Use it to search for documents or have it explain things to you. You can set it up to use a variety of local and online models. It is inspired by [isaksamsten](https://github.com/isaksamsten)'s excellent work on [papisqa](https://github.com/isaksamsten/papisqa).
 
 Papis-ask is under active development. Expect bugs and changes.
 

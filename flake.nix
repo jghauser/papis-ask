@@ -48,6 +48,12 @@
                 hash = "sha256-4mwhe+e2xgFMYZAv+Nblj3AAnDinLvuGGYs8KAHT2Sw=";
               };
             });
+            mcp = super.mcp.overrideAttrs (oldAttrs: {
+              pytestFlagsArray = [
+                "-W"
+                "ignore::pydantic.warnings.PydanticDeprecatedSince210"
+              ];
+            });
           };
         };
         python3Packages = python.pkgs;

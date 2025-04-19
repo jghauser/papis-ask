@@ -22,9 +22,12 @@ python3Packages.buildPythonPackage rec {
     hash = "sha256-rOimDblAsc1sYHNDhTPw3BVyX/NeoBYN85C0Q6IZfK8=";
   };
 
-  nativeBuildInputs = with pkgs.rustPlatform; [cargoSetupHook maturinBuildHook];
+  nativeBuildInputs = with pkgs.rustPlatform; [
+    cargoSetupHook
+    maturinBuildHook
+  ];
 
-  pythonImportsCheck = ["tantivy"];
+  pythonImportsCheck = [ "tantivy" ];
 
   meta = {
     description = " Python bindings for Tantivy ";

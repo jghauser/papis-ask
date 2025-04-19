@@ -32,7 +32,7 @@ python3Packages.buildPythonPackage rec {
     # sentence-transformers
   ];
 
-  pythonImportsCheck = ["lmi"];
+  pythonImportsCheck = [ "lmi" ];
 
   meta = {
     description = "A client to provide LLM responses for FutureHouse applications";

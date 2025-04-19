@@ -23,7 +23,7 @@ python3Packages.buildPythonPackage rec {
     setuptools-scm
   ];
 
-  pythonImportsCheck = ["aviary"];
+  pythonImportsCheck = [ "aviary" ];
 
   meta = {
     description = "Gymnasium framework for training language model agents on constructive tasks";

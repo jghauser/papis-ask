@@ -262,7 +262,7 @@ def determine_file_status(
 @click.group("ask", cls=DefaultGroup, default="query", default_if_no_args=True)
 @click.help_option("-h", "--help")
 def cli():
-    """Ask questions about your library"""
+    """Ask questions about your library."""
     pass
 
 
@@ -272,41 +272,41 @@ def cli():
 @click.option(
     "--output",
     "-o",
-    help="Output format",
+    help="Output format.",
     type=str,
     default=lambda: papis.config.getint("output", SECTION_NAME),
 )
 @click.option(
     "--evidence-k",
     "-e",
-    help="Number of evidence pieces to retrieve",
+    help="Number of evidence pieces to retrieve.",
     type=int,
     default=lambda: papis.config.getint("evidence-k", SECTION_NAME),
 )
 @click.option(
     "--max-sources",
     "-m",
-    help="Maximum number of sources for an answer",
+    help="Maximum number of sources for an answer.",
     type=int,
     default=lambda: papis.config.getint("max-sources", SECTION_NAME),
 )
 @click.option(
     "--answer-length",
     "-l",
-    help="Length of the answer",
+    help="Length of the answer.",
     type=str,
     default=lambda: papis.config.getstring("answer-length", SECTION_NAME),
 )
 @papis.cli.bool_flag(
     "--context/--no-context",
     "-c",
-    help="Show context for each source",
+    help="Show context for each source.",
     default=lambda: papis.config.getboolean("context", SECTION_NAME),
 )
 @papis.cli.bool_flag(
     "--excerpt/--no-excerpt",
     "-x",
-    help="Show context including excerpt for each source",
+    help="Show context including excerpt for each source.",
     default=lambda: papis.config.getboolean("excerpt", SECTION_NAME),
 )
 def query_cmd(
@@ -318,7 +318,7 @@ def query_cmd(
     context: bool,
     excerpt: bool,
 ) -> None:
-    """Ask questions about your library"""
+    """Ask questions about your library."""
     logger.debug(
         f"Starting 'ask' with query={query}, output={output}, evidence_k={evidence_k}, max_sources={max_sources}, answer_length={answer_length}, context={context}, excerpt={excerpt} "
     )
@@ -358,12 +358,12 @@ def query_cmd(
 @click.option(
     "--force",
     "-f",
-    help="Force regeneration of the entire index",
+    help="Force regeneration of the entire index.",
     is_flag=True,
     default=False,
 )
 def index_cmd(query: Optional[str], force: bool):
-    """Update the library index"""
+    """Update the library index."""
     logger.debug(f"Starting 'index' with query={query}, force={force}")
     asyncio.run(_index_async(query, force))
 

@@ -4,7 +4,7 @@
 }:
 python3Packages.buildPythonPackage rec {
   pname = "fhaviary";
-  version = "0.18.3";
+  version = "0.20.0";
 
   format = "pyproject";
 
@@ -12,7 +12,7 @@ python3Packages.buildPythonPackage rec {
     owner = "Future-House";
     repo = "aviary";
     rev = "refs/tags/v${version}";
-    hash = "sha256-zIZB62bzIF+qLIERmwrrhvYZXJGmlCRx8UtCicxzMAo=";
+    hash = "sha256-Sv5oPbN1qqRcCG+MJqvAy2aXDfPxbJPuEZNlgHT+XqY=";
   };
 
   propagatedBuildInputs = with python3Packages; [

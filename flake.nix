@@ -22,38 +22,6 @@
             fhlmi = import ./nix/pkgs/fhlmi { inherit pkgs python3Packages; };
             fhaviary = import ./nix/pkgs/fhaviary { inherit pkgs python3Packages; };
             tantivy = import ./nix/pkgs/tantivy { inherit pkgs python3Packages; };
-            # we need this specific older version of pydantic
-            pydantic = super.pydantic.overrideAttrs (oldAttrs: rec {
-              version = "2.10.1";
-              src = pkgs.fetchFromGitHub {
-                owner = "pydantic";
-                repo = "pydantic";
-                rev = "refs/tags/v${version}";
-                hash = "sha256-6eqGhTZedJbRZqAcixcxaWgQuRklFLwdy+lmUFRj2Ws=";
-              };
-            });
-            pydantic-core = super.pydantic-core.overrideAttrs (oldAttrs: rec {
-              pname = "pydantic-core";
-              version = "2.27.1";
-
-              src = pkgs.fetchFromGitHub {
-                owner = "pydantic";
-                repo = "pydantic-core";
-                rev = "refs/tags/v${version}";
-                hash = "sha256-ikdQAT1y0g+V2gPU0Ohn+UktJrEObnixCW56/J1UsSk=";
-              };
-              cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
-                inherit src;
-                name = "${pname}-${version}";
-                hash = "sha256-4mwhe+e2xgFMYZAv+Nblj3AAnDinLvuGGYs8KAHT2Sw=";
-              };
-            });
-            mcp = super.mcp.overrideAttrs (oldAttrs: {
-              pytestFlagsArray = [
-                "-W"
-                "ignore::pydantic.warnings.PydanticDeprecatedSince210"
-              ];
-            });
           };
         };
         python3Packages = python.pkgs;

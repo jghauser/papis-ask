@@ -4,22 +4,21 @@
 }:
 python3Packages.buildPythonPackage rec {
   pname = "tantivy";
-  version = "2025-01-01-unstable"; # NOTE: latest stable doesn't build (easily) because of API changes in Rust 1.80 so we're using a more modern version
+  version = "0.24.0";
 
   format = "pyproject";
 
   src = pkgs.fetchFromGitHub {
     owner = "quickwit-oss";
     repo = "tantivy-py";
-    # rev = version;
-    rev = "master";
-    hash = "sha256-bKgwwRPB0QnhvcXKq4NwnEPcD9LEEWHjFMpMi3mg0rU=";
+    rev = version;
+    hash = "sha256-ZwmhOkNvKZaFPk7swxm+T3VxI7LlWDq//JjiLT23o8s=";
   };
 
   cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
     inherit src;
     name = "${pname}-${version}";
-    hash = "sha256-rOimDblAsc1sYHNDhTPw3BVyX/NeoBYN85C0Q6IZfK8=";
+    hash = "sha256-7QHUKOUhPQy+tc1JEB/+MGsPy8LKej5TSScw5LYXZlw=";
   };
 
   nativeBuildInputs = with pkgs.rustPlatform; [

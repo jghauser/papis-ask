@@ -4,7 +4,7 @@
 }:
 python3Packages.buildPythonPackage rec {
   pname = "paper-qa";
-  version = "5.19.0";
+  version = "5.21.0";
 
   format = "pyproject";
 
@@ -12,7 +12,7 @@ python3Packages.buildPythonPackage rec {
     owner = "Future-House";
     repo = "${pname}";
     rev = "refs/tags/v${version}";
-    hash = "sha256-Ntb02Oc34w7SECFhhIu80Uzzpt4lnZR6bJQX7oC5WCY=";
+    hash = "sha256-jrLMKGHIudo7yQH64vlrExnLytXAZhG+6GWBwb9NIBA=";
   };
 
   propagatedBuildInputs = with python3Packages; [

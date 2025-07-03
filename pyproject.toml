@@ -34,7 +34,7 @@ classifiers = [
 ]
 dependencies = [
   "papis>=0.14",
-  "paper-qa>=5.14",
+  "paper-qa>=5.21.0",
   "click-default-group>=1.2.4",
   "rich>=13.9.0",
 ]

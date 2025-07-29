@@ -23,6 +23,10 @@
             fhlmi = import ./nix/pkgs/fhlmi { inherit pkgs python3Packages; };
             fhaviary = import ./nix/pkgs/fhaviary { inherit pkgs python3Packages; };
             tantivy = import ./nix/pkgs/tantivy { inherit pkgs python3Packages; };
+            litellm = super.litellm.overridePythonAttrs (old: {
+              propagatedBuildInputs =
+                (old.propagatedBuildInputs or [ ]) ++ (old.optional-dependencies.proxy or [ ]);
+            });
           };
         };
         python3Packages = python.pkgs;

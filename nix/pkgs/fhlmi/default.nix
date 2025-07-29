@@ -5,13 +5,13 @@
 python3Packages.buildPythonPackage rec {
   pname = "fhlmi";
   format = "pyproject";
-  version = "0.28.0";
+  version = "0.30.0";
 
   src = pkgs.fetchFromGitHub {
     owner = "Future-House";
     repo = "ldp";
     rev = "refs/tags/v${version}";
-    hash = "sha256-a0QK2xdXPb7iRY0hF6PLryfEC6wEdcOoNTuW9bJtpAQ=";
+    hash = "sha256-/EGUBl1KDwxeuawjY5cZ0TEbpQyQM8/TQwDtxh1Bjc4=";
   };
 
   sourceRoot = "source/packages/lmi";

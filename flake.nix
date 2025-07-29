@@ -18,7 +18,13 @@
         pkgs = nixpkgs.legacyPackages.${system};
         python = pkgs.python3.override {
           packageOverrides = self: super: {
+            # NOTE: two versions to handle circular dependency between paper-qa and paper-qa-pypdf
             paper-qa = import ./nix/pkgs/paper-qa { inherit pkgs python3Packages; };
+            paper-qa-with-pypdf = self.paper-qa.overridePythonAttrs (old: {
+              propagatedBuildInputs =
+                (old.propagatedBuildInputs or [ ]) ++ (self.optional-dependencies.paper-qa-pypdf or [ ]);
+            });
+            paper-qa-pypdf = import ./nix/pkgs/paper-qa-pypdf { inherit pkgs python3Packages; };
             fhlmi = import ./nix/pkgs/fhlmi { inherit pkgs python3Packages; };
             fhaviary = import ./nix/pkgs/fhaviary { inherit pkgs python3Packages; };
             tantivy = import ./nix/pkgs/tantivy { inherit pkgs python3Packages; };
@@ -43,7 +49,7 @@
             ];
 
             dependencies = with python3Packages; [
-              paper-qa
+              paper-qa-with-pypdf
               click-default-group
               rich
             ];

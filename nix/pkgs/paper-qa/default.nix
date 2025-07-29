@@ -4,7 +4,7 @@
 }:
 python3Packages.buildPythonPackage rec {
   pname = "paper-qa";
-  version = "5.21.0";
+  version = "5.27.0";
 
   format = "pyproject";
 
@@ -12,11 +12,10 @@ python3Packages.buildPythonPackage rec {
     owner = "Future-House";
     repo = "${pname}";
     rev = "refs/tags/v${version}";
-    hash = "sha256-jrLMKGHIudo7yQH64vlrExnLytXAZhG+6GWBwb9NIBA=";
+    hash = "sha256-UawOu/TLWe66KClPSQLaxx+xdBosLoZ5h5K3aiAUgUc=";
   };
 
   propagatedBuildInputs = with python3Packages; [
-    pymupdf
     aiohttp
     anyio
     fhlmi
@@ -33,6 +32,12 @@ python3Packages.buildPythonPackage rec {
     tenacity
     tiktoken
   ];
+
+  # NOTE: to handle circular dependency between paper-qa and paper-qa-pypdf
+  pythonRemoveDeps = [ "paper-qa-pypdf" ];
+  passthru.optional-dependencies = {
+    paper-qa-pypdf = [ python3Packages.paper-qa-pypdf ];
+  };
 
   # NOTE: Disabled since it causes "> PermissionError: [Errno 13] Permission denied: '/homeless-shelter'"
   # pythonImportsCheck = ["paperqa"];

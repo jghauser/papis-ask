@@ -20,7 +20,6 @@ from papis_ask.output import (
     to_terminal_output,
     to_json_output,
     to_markdown_output,
-    transform_answer,
 )
 
 logger = papis.logging.get_logger(__name__)
@@ -62,15 +61,17 @@ async def add_file_to_index(
 
     dockey = md5sum(file_path)
 
-    ref, _, _ = extract_doc_papis_metadata(doc_papis)
+    _, papis_id, _ = extract_doc_papis_metadata(doc_papis)
 
     try:
-        if docname := await docs_index.aadd(
-            file_path,
-            dockey=dockey,
-            docname=ref,  # to give somewhat sensible docnames (we don't depend on it)
-            citation=ref,  # to avoid unnecessary llm calls
-            settings=settings,
+        if (
+            docname := await docs_index.aadd(
+                file_path,
+                dockey=dockey,
+                docname=papis_id,  # to give somewhat sensible docnames (we don't depend on it)
+                citation=papis_id,  # to avoid unnecessary llm calls
+                settings=settings,
+            )
         ):
             if ref := await update_index_metadata(
                 file_path=file_path,
@@ -212,7 +213,6 @@ def extract_doc_papis_metadata(
     # fallback ref based on papis_id
     if ref.strip() == "":
         ref = papis_id
-    ref = f"@{ref}"
 
     doi: Optional[str] = doc_papis.get("doi")
 
@@ -336,7 +336,6 @@ def query_cmd(
 
     if docs_index:
         answer = docs_index.query(query, settings=settings)
-        answer = transform_answer(answer)
 
         if output == "json":
             output = to_json_output(answer)
@@ -504,7 +503,7 @@ async def _index_async(query: Optional[str], force: bool) -> None:
         file_location, ref = remove_document_from_index(docs_index, dockey)
         if file_location:
             logger.info(
-                "%d/%d: Removed %s (%s)",
+                "%d/%d: Removed @%s (%s)",
                 counter,
                 total_files,
                 ref,
@@ -527,7 +526,7 @@ async def _index_async(query: Optional[str], force: bool) -> None:
             settings=settings,
         ):
             logger.info(
-                "%d/%d: Indexed %s (%s)",
+                "%d/%d: Indexed @%s (%s)",
                 counter,
                 total_files,
                 ref,
@@ -566,7 +565,7 @@ async def _index_async(query: Optional[str], force: bool) -> None:
                 settings=settings,
             ):
                 logger.info(
-                    "%d/%d: Updated metadata for %s (%s)",
+                    "%d/%d: Updated metadata for @%s (%s)",
                     counter,
                     total_files,
                     ref,

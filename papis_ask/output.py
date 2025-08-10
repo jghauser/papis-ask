@@ -1,7 +1,7 @@
 import re
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from rich.console import Console
 from rich.panel import Panel
@@ -24,32 +24,30 @@ def transform_answer(answer: Any) -> Any:
     answer.answer = to_latex_math(answer.answer)
 
     # Create a mapping of document names to references
-    docname_to_ref = {}
+    papis_id_to_ref = {}
 
     # First pass: collect all document names and their references and convert to latex math
     for context in answer.contexts:
         context.context = to_latex_math(context.context)
         ref = context.text.doc.other.get("ref", context.text.doc.other.get("papis_id"))
-        ref = f"@{ref}"
-        context.text.doc.pages = context.text.name.split()[2]
-        docname_to_ref[context.text.name.split()[0]] = ref
+        papis_id_to_ref[context.text.name.split()[0]] = ref
 
     # Replace references in the answer text
-    # Pattern: (docname pages X-N) -> [@ref, p. X-N]
+    # Pattern: (papis_id pages X-N) -> [@ref, p. X-N]
     def replace_citation(match):
-        docname = match.group(1)
+        papis_id = match.group(1)
         pages = match.group(2)
 
-        ref = docname_to_ref.get(docname, docname)
+        ref = papis_id_to_ref.get(papis_id, papis_id)
         # Format pages as p. X-N
         formatted_pages = f"p. {pages}" if pages else ""
 
         if formatted_pages:
-            return f"[{ref}, {formatted_pages}]"
+            return f"[@{ref}, {formatted_pages}]"
         else:
-            return f"[{ref}]"
+            return f"[@{ref}]"
 
-    # Pattern to match citations like (@docname pages X-N)
+    # Pattern to match citations like (papis_id pages X-N)
     citation_pattern = r"\(([^)\s]+?)(?:\s+pages\s+([^)]+))?\)"
     answer.answer = re.sub(citation_pattern, replace_citation, answer.answer)
 
@@ -62,6 +60,7 @@ def to_terminal_output(
     excerpt: bool,
 ) -> None:
     """Format and print the answer with optional context and excerpts."""
+    answer = transform_answer(answer)
     console = Console()
 
     # Format question
@@ -181,6 +180,8 @@ def to_markdown_output(
     excerpt: bool = False,
 ) -> str:
     """Format the answer as a well-formatted markdown document."""
+    answer = transform_answer(answer)
+
     markdown = []
 
     # Question section

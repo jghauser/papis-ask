@@ -36,9 +36,12 @@ def transform_answer(answer: Any) -> Any:
     # Pattern: (papis_id pages X-N) -> [@ref, p. X-N]
     def replace_citation(match):
         papis_id = match.group(1)
+        if papis_id not in papis_id_to_ref:
+            # Ordinary parentheses, e.g. f(x) or (EKF), also match the pattern.
+            return match.group(0)
         pages = match.group(2)
 
-        ref = papis_id_to_ref.get(papis_id, papis_id)
+        ref = papis_id_to_ref[papis_id]
         # Format pages as p. X-N
         formatted_pages = f"p. {pages}" if pages else ""
 
